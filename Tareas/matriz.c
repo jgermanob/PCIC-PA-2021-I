@@ -4,6 +4,7 @@
 
 int main(void){
     int matrix[500][500];
+    int *p;
     int i, j, sum;
     
     //Inicialiazción de la matriz con numeros aleatorios en el intervalo [0,9] 
@@ -36,6 +37,14 @@ int main(void){
 
     //Forma 3. Acceso a elementos de la matriz de la forma *(p + n*i+j)
     sum = 0;
+    p = &matrix[0][0];
+    int m = 500;
     clock_t start3 = clock();
+    for(i=0; i<500; i++){
+        for(j=0; j<500;j++){
+            sum += *(p +m*i +j);
+        }
+    }
+    printf("Forma 3. Resultado = %d. Tiempo transcurrido: %f[s]\n", sum, (((double)clock() - start3)/CLOCKS_PER_SEC));
 
 }
