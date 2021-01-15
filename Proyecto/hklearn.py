@@ -4,6 +4,23 @@ from threading import Thread
 from model import Model
 from scipy import optimize
 
+"""
+Cosas por hacer:
+    - Cambiar numpy arrays por dataframes y comparar rendimientos
+    - Probar otras formas de paralelización y comparar rendimientos:
+        https://stackoverflow.com/questions/9786102/how-do-i-parallelize-a-simple-python-loop
+        https://www.geeksforgeeks.org/parallel-processing-in-python/
+        
+        - multiprocessing
+        - numba
+        - thread
+        - asyncio
+        - joblib
+        - con un job queue
+        - dask
+    - Probar con otros solvers y comparar rendimientos
+
+"""
 
 # class hklearn:
 class LogisticRegression(Model):
@@ -14,11 +31,18 @@ class LogisticRegression(Model):
         self.all_theta = []
         self.max_iter = maxiter
 
+    #Probar con otros solvers
     def func(self, thetas_p, max_iter, n, c, X_p, y_p, C):
         initial_theta = np.zeros((n + 1, 1), dtype=np.float64)
         args = [X_p[c], y_p[c], C]
         print('Iter: ', c)
-        theta= optimize.fmin_cg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=max_iter)
+        #theta= optimize.fmin_cg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=max_iter)
+        if self.solver == 'fmincg':
+            theta= optimize.fmin_cg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)
+        elif self.solver == 'newton-cg':
+            theta= optimize.fmin_ncg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)
+        elif self.solver == 'lbfgs':
+            theta= optimize.fmin_l_bfgs_b(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)[0]
         thetas_p[c] = theta.transpose()
 
     def func2(self, y_p, c, y, X_p, X):
@@ -29,9 +53,9 @@ class LogisticRegression(Model):
     def fit(self, X, y):
         n_labels = len(set(y))
         n = X.shape[1]
-        m = m = X.shape[0]
+        m = X.shape[0]
         self.all_theta = np.zeros((n_labels, n + 1), dtype=np.float64)
-        X_aux = np.concatenate((np.ones((m,1), dtype = np.float64), X), axis=1)
+        X_aux = np.concatenate((np.ones((m ,1), dtype = np.float64), X), axis=1)
         initial_theta = np.zeros((n + 1, 1), dtype=np.float64)
         theta = np.zeros((n + 1, 1), dtype=np.float64)
         args = [X_aux, y.copy(), self.C]
@@ -41,12 +65,20 @@ class LogisticRegression(Model):
         if self.n_jobs is None:
             for c in range(n_labels):
                 args[1] = np.array(list(map(lambda x : 1.0 if x == c else 0.0, y)), dtype=np.float64)
-                theta= optimize.fmin_cg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)
+                if self.solver == 'fmincg':
+                    theta= optimize.fmin_cg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)
+                elif self.solver == 'newton-cg':
+                    theta= optimize.fmin_ncg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)
+                elif self.solver == 'lbfgs':
+                    theta= optimize.fmin_l_bfgs_b(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)[0]
+                    #print(theta)
                 self.all_theta[c, :] = theta.transpose()
         else:
             y_p = {}
             thetas = {}
             X_p = {}
+            #revisar si se puede hacer con dataframes (tengo entendido que son concurrent friendly)
+            #probar con otras formas de paralelizar
             with concurrent.futures.ThreadPoolExecutor(max_workers = self.n_jobs) as executor:
                 for c in range(n_labels):
                     future = executor.submit(self.func2, y_p, c, y, X_p, X_aux)
