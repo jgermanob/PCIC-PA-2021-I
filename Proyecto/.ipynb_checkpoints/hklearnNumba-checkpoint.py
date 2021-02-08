@@ -3,7 +3,7 @@ import concurrent.futures
 from threading import Thread
 from model import Model
 from scipy import optimize
-from numba import jit
+import numba as nb
 
 """
 Cosas por hacer:
@@ -51,58 +51,31 @@ class LogisticRegression(Model):
         X_p[c] = X
         y_p[c] = np.array(list(map(lambda x : 1.0 if x == c else 0.0, y)), dtype=np.float64)  
 
-    @jit(nopython=True)
-    def fit(self, X, y):
-        labels = set(y)
-        n_labels = len(labels)
-        encoder = dict(zip(labels, np.arange(float(n_labels))))
-        self.decoder = dict(zip(np.arange(float(n_labels)), labels))
-        n = X.shape[1]
-        m = X.shape[0]
+    @nb.jit
+    def fit(self, X, y,n, m):
+        #labels = set(y)
+        #n_labels = len(labels)
+        #encoder = dict(zip(labels, np.arange(float(n_labels))))
+        #self.decoder = dict(zip(np.arange(float(n_labels)), labels))
+        #n = X.shape[1]
+        #m = X.shape[0]
         
         X_aux = np.concatenate((np.ones((m ,1), dtype = np.float64), X), axis=1)
         initial_theta = np.zeros((n + 1, 1), dtype=np.float64)
         theta = np.zeros((n + 1, 1), dtype=np.float64)
-        y_enc = np.array(list(map(lambda x : encoder[x], y)))
+        #y_enc = np.array(list(map(lambda x : encoder[x], y)))
+        y_enc = np.array(y)
         args = [X_aux, y_enc, self.C]
-
-
-        if n_labels > 2:
-            self.all_theta = np.zeros((n_labels, n + 1), dtype=np.float64)
-            if self.n_jobs is None:
-                for c in range(n_labels):
-                    args[1] = np.array(list(map(lambda x : 1.0 if x == c else 0.0, y_enc)), dtype=np.float64)
-                    if self.solver == 'fmincg':
-                        theta= optimize.fmin_cg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)
-                    elif self.solver == 'newton-cg':
-                        theta= optimize.fmin_ncg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)
-                    elif self.solver == 'lbfgs':
-                        theta= optimize.fmin_l_bfgs_b(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)[0]
-                        #print(theta)
-                    self.all_theta[c, :] = theta.transpose()
-            else:
-                y_p = {}
-                thetas = {}
-                X_p = {}
-                #revisar si se puede hacer con dataframes (tengo entendido que son concurrent friendly)
-                #probar con otras formas de paralelizar
-                with concurrent.futures.ThreadPoolExecutor(max_workers = self.n_jobs) as executor:
-                    for c in range(n_labels):
-                        future = executor.submit(self.func2, y_p, c, y_enc, X_p, X_aux)
-                        future = executor.submit(self.func, thetas, self.max_iter, n, c, X_p, y_p, self.C)
-
-                for c in range(n_labels):
-                    self.all_theta[c,:] = thetas[c]
-        else:
-            self.all_theta = np.zeros((1, n + 1), dtype=np.float64)
-            if self.solver == 'fmincg':
-                theta= optimize.fmin_cg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)
-            elif self.solver == 'newton-cg':
-                theta= optimize.fmin_ncg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)
-            elif self.solver == 'lbfgs':
-                theta= optimize.fmin_l_bfgs_b(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)[0]
-                #print(theta)
-            self.all_theta = theta.transpose()
+        
+        self.all_theta = np.zeros((1, n + 1), dtype=np.float64)
+        if self.solver == 'fmincg':
+            theta= optimize.fmin_cg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)
+        elif self.solver == 'newton-cg':
+            theta= optimize.fmin_ncg(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)
+        elif self.solver == 'lbfgs':
+            theta= optimize.fmin_l_bfgs_b(self.cost_func, initial_theta, fprime = self.grad_cost_func, args = args, maxiter=self.max_iter)[0]
+            #print(theta)
+        self.all_theta = theta.transpose()
 
 
     def predict(self, X):

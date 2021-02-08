@@ -51,7 +51,7 @@ class LogisticRegression(Model):
         X_p[c] = X
         y_p[c] = np.array(list(map(lambda x : 1.0 if x == c else 0.0, y)), dtype=np.float64)  
 
-    @nb.jit(parallel=True)
+    @nb.jit
     def fit(self, X, y,n, m):
         #labels = set(y)
         #n_labels = len(labels)
