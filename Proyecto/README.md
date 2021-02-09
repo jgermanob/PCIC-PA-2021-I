@@ -18,3 +18,5 @@ La carpeta <code>Data</code> contiene los archivos de datos necesarios para el p
 El notebook _ClasificacionDigitos.ipynb_ contiene los experimentos realizados con el conjunto de datos de dígitos escritos a mano.
 
 El notebook _ClasificacionGenerosMusicales.ipynb_ contiene los experimentos realizados con el conjunto de datos de música.
+
+La carpeta <code>Escrito</code> contiene los archivos _.tex_ y _.bib_ necesarios para el reporte del proyecto.
