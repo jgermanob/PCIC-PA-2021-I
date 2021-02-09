@@ -12,3 +12,9 @@ Las dependencias necesarias para ejecutar los cuadernos de Jupyter son:
 * Sci-kit learn
 * Dask
 * Numba
+
+La carpeta <code>Data</code> contiene los archivos de datos necesarios para el problema de clasificación de géneros musicales.
+
+El notebook _ClasificacionDigitos.ipynb_ contiene los experimentos realizados con el conjunto de datos de dígitos escritos a mano.
+
+El notebook _ClasificacionGenerosMusicales.ipynb_ contiene los experimentos realizados con el conjunto de datos de música.
