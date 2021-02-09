@@ -5,23 +5,6 @@ from model import Model
 from scipy import optimize
 import numba as nb
 
-"""
-Cosas por hacer:
-    - Cambiar numpy arrays por dataframes y comparar rendimientos
-    - Probar otras formas de paralelización y comparar rendimientos:
-        https://stackoverflow.com/questions/9786102/how-do-i-parallelize-a-simple-python-loop
-        https://www.geeksforgeeks.org/parallel-processing-in-python/
-        
-        - multiprocessing
-        - numba
-        - thread
-        - asyncio
-        - joblib
-        - con un job queue
-        - dask
-    - Probar con otros solvers y comparar rendimientos
-
-"""
 
 # class hklearn:
 class LogisticRegression(Model):
